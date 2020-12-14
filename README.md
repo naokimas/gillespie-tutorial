@@ -8,7 +8,7 @@
 Usage:
 ```
 g++ voter-net.cc -o voter-net.out
-voter-net.out infilename > result-voter-net
+./voter-net.out infilename > result-voter-net
 ```
 
 - rrg-N100k5.mat: A regular random graph with N=100 nodes and degree 5.
