@@ -5,7 +5,10 @@
 ### Voter model on networks ###
 - voter-net.cc: main code, calling mt19937ar.c
 
-Usage: voter-net.out infilename > result-voter-net
+Usage:
+```
+voter-net.out infilename > result-voter-net
+```
 
 - rrg-N100k5.mat: A regular random graph with N=100 nodes and degree 5.
 
