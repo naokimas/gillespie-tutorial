@@ -7,6 +7,7 @@
 
 Usage:
 ```
+g++ voter-net.cc -o voter-net.out
 voter-net.out infilename > result-voter-net
 ```
 
