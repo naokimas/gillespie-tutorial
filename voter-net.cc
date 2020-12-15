@@ -76,10 +76,9 @@ int main (int argc, char **argv) {
     
     /* loading network data and preprocessing done */
 
-    double r = 1.0; // strength of opinion A. The strength of opinion B is assumed to be 1. The unbiased voter model corresponds to r=1.
-    int tr;
+    double beta_B_to_A = 1.0; // strength of opinion A. The strength of opinion B is assumed to be 1. The unbiased voter model corresponds to r=1.
     int trials = 4; // # trials
-    // If one wants to do x times for each index patient, set trials = x*n;
+    int tr;
 
     double t, dt; // time
     int st[nV]; // node's opinion
@@ -111,7 +110,7 @@ int main (int argc, char **argv) {
         if (st[i]==0)
             rate[i] =  (double)n_opposite_neighbors[i]; // opinion A -> opinion B
         else
-            rate[i] = r * n_opposite_neighbors[i]; // B -> A  
+            rate[i] = beta_B_to_A * n_opposite_neighbors[i]; // B -> A  
         total_rate += rate[i];
     }
     t=0.0; // initialize time
@@ -151,7 +150,7 @@ int main (int argc, char **argv) {
         if (st[i]==0)
             rate_new = (double)n_opposite_neighbors[i]; // A -> B
         else
-            rate_new = r * n_opposite_neighbors[i]; // B -> A
+            rate_new = beta_B_to_A * n_opposite_neighbors[i]; // B -> A
         total_rate += rate_new - rate[i];
         rate[i] = rate_new;
         
@@ -166,7 +165,7 @@ int main (int argc, char **argv) {
                 if (st[E[j]]==0)
                     rate_new = (double)n_opposite_neighbors[E[j]]; // A -> B
                 else
-                    rate_new = r * n_opposite_neighbors[E[j]];
+                    rate_new = beta_B_to_A * n_opposite_neighbors[E[j]];
                 total_rate += rate_new - rate[E[j]];
                 rate[E[j]] = rate_new;
             }
