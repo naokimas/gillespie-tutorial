@@ -35,17 +35,18 @@ g++ voter-wellmixed.cc
 The first argument (=100 in the example above) is the number of nodes.
 
 #### networks ####
-- voter-net.cc
+- voter-net.cc  
 Usage:
 ```
 g++ voter-net.cc
 ./a.out infilename > result-voter-net
 ```
 
-- voter-net-binary-tree.cc: same as voter-net.cc but using the binary search tree for faster speed. Usage is the same as voter-net.cc
+- voter-net-binary-tree.cc: same as voter-net.cc but using the binary search tree for faster speed.  
+Usage is the same as voter-net.cc
 
 ### Lotka-Volterra model (well-mixed populations only) ###
-- lotka-volterra-wellmixed.cc
+- lotka-volterra-wellmixed.cc  
 Usage:
 ```
 g++ lotka-volterra-wellmixed.cc
