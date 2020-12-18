@@ -17,7 +17,7 @@ TO COME
 TO COME
 
 ### SIR dynamics on the metapopulation network model ###
-- sir-metapop.cc
+- sir-metapop.cc  
 Usage:
 ```
 g++ sir-metapop.cc
@@ -26,7 +26,7 @@ g++ sir-metapop.cc
 
 ### Voter model ###
 #### well-mixed populations ####
-- voter-wellmixed.cc
+- voter-wellmixed.cc  
 Usage:
 ```
 g++ voter-wellmixed.cc
