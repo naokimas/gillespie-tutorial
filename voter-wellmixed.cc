@@ -13,10 +13,11 @@ using namespace std;
     http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
     http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c
 
-    If one prefers to use the in-built random number generator,
+    If one prefers to use the in-built pseudo-random number generator,
     (genrand_int32()+0.5)/4294967296.0 should be replaced by (double)rand()/RAND_MAX
     and
-    init_genrand(time(NULL)) should be replaced by, e.g., srand(time(NULL)) */
+    init_genrand(time(NULL)) should be replaced by, e.g., srand(time(NULL))
+    However, we recommend against the use of the in-built pseudo-random number generator. */
 
 int main (int argc, char **argv) {
 
@@ -33,7 +34,7 @@ int main (int argc, char **argv) {
     int trials = 4; // # trials
     int tr;
 
-    double t, dt; // time
+    double t; // time
     int nA; // # nodes in opinion A
     double ra;
     double total_rate; // total state-transition rate 
@@ -49,8 +50,7 @@ int main (int argc, char **argv) {
     while (nA > 0 && nA < nV) { // There are still two opinions coexisting.
 
         total_rate = (1 + beta_B_to_A) * nA * (nV-nA); // rate(B->A) = beta_B_to_A * (nV-nA) * nA; rate(A->B) = 1 * nA * (nV-nA)
-        dt = -1.0 / total_rate * log ((genrand_int32()+0.5)/4294967296.0); // increment in t
-        t += dt;
+        t += - log((genrand_int32()+0.5)/4294967296.0) / total_rate;
 
     	// determine whether A->B or B->A occurs
     	ra = (genrand_int32()+0.5)/4294967296.0 * total_rate; // ra \in [0, total_rate], uniformly distributed
@@ -59,10 +59,9 @@ int main (int argc, char **argv) {
         else // B -> A
             nA++;
 
-      	cout << t << " " << (double)nA/nV << endl;
-    } // one state-transition event completed
-    
-  } // all the trials completed
+        cout << t << " " << (double)nA/nV << endl; // one state-transition event completed
+    } // one trial completed
+    } // all the trials completed
 
-  return 0;
+    return 0;
 } // end of main

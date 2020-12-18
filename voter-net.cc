@@ -14,14 +14,13 @@ using namespace std;
     http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
     http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c
 
-    If one prefers to use the in-built random number generator,
+    If one prefers to use the in-built pseudo-random number generator,
     (genrand_int32()+0.5)/4294967296.0 should be replaced by (double)rand()/RAND_MAX
     and
-    init_genrand(time(NULL)) should be replaced by, e.g., srand(time(NULL)) */
+    init_genrand(time(NULL)) should be replaced by, e.g., srand(time(NULL))
+    However, we recommend against the use of the in-built pseudo-random number generator. */
 
-int compare (const void *a, const void *b) {
-  return (*(int*)a-*(int*)b);
-}
+#include "tools-readfile.cc" // to read input file and manage memory
 
 int main (int argc, char **argv) {
 
@@ -32,55 +31,25 @@ int main (int argc, char **argv) {
 
     init_genrand(time(NULL)); // seed the random number generator
 
-    int i,j,vs,ve;
+    int i, j, vs, ve;
     int nV; // # nodes
     int nE; // # bidirectional edges. If the network is undirected, nE = 2 * (number of edges)
-    char dummy[8];
-
-    ifstream fin(argv[1]); // edge list
-    if (!fin) {
-        cerr << "voter-net.out: cannot open input edge file" << endl;
-        exit(8);
-    }
-
-    // *** I SHOULD ASSUME A MORE POPULAR DATA FORMAT AND ADJUST THE WRAPPER AROUND HERE.
-
-    fin >> dummy >> nV >> nE; // The first line of the file has '#', the number of nodes, and the number of edges, space separated
-    cerr << nV << " nodes, " << nE << " edges" << endl; // undirected net assumed
-    int k[nV]; // k[i] = degree of node i
-    for (i=0 ; i<nV ; i++)
-        k[i] = 0; // initialization
-    int *E; // list of edges
-    E = (int *)malloc(4*nE*sizeof(int)); // allocate memory
-//    cerr << "hello" << endl;
-    for (i=0 ; i<nE ; i++) { // read all edges
-        fin >> vs >> ve >> dummy; // Each line of the input file has the index of the two nodes connected by an edge in the 1st and 2nd columns, and edge weight, which we do not use in this code, in the 3rd column. 
-    // Note that in this code the node index starts from 0, not from 1.
-    // And in the input file the node index starts from 1.
-        vs--; ve--; // node index corrected here. Now the node index starts from 0.
-        E[4*i+3]=E[4*i]=vs; // i-th edge
-        E[4*i+2]=E[4*i+1]=ve;
-        k[vs]++; k[ve]++; // undirected network assumed
-    }
-    fin.close();
-
-    int accum_k[nV]; // accum_k[i] = sum of degrees of nodes from 0 to i
-    accum_k[0] = k[0];
-    for (i=1 ; i<nV ; i++) accum_k[i] = accum_k[i-1] + k[i];
-
-    qsort(E,2*nE,2*sizeof(int),compare);
-    for (i=0 ; i<2*nE ; i++) 
-        E[i] = E[2*i+1]; // reuse E[]
-        // Now E[x] where x = accum_k[i-1], ..., accum_k[i]-1 contains the neighbors of node i, with the convention accum_k[-1] = 0.
-        // Note that accum_k[nV-1] = nV-1
+    int *nei_list; // list of neighbors for each node
+    int *k; // k[i] = degree of node [i]
+    int *accum_k; // cumulative degree distribution
     
-    /* loading network data and preprocessing done */
+    readfile(argv[1], &nV, &nE, &nei_list, &k, &accum_k);
 
+    cerr << nV << " " << nE << endl;
+    for (i=0 ; i<nV ; i++)
+        cerr << i << " " << k[i] << " " << accum_k[i] << " : ";
+        
     double beta_B_to_A = 1.0; // strength of opinion A. The strength of opinion B is assumed to be 1. The unbiased voter model corresponds to r=1.
     int trials = 4; // # trials
     int tr;
 
-    double t, dt; // time
+    double t; // time
+    double tw; // waiting time to the next event
     int st[nV]; // node's opinion
     double ra; // random variate
     double total_rate; // total state-transition rate 
@@ -104,11 +73,11 @@ int main (int argc, char **argv) {
         ind_min = (i==0)? 0 : accum_k[i-1];
         ind_max = accum_k[i] - 1;
         for (j = ind_min ; j <= ind_max ; j++) {
-                if (st[i] != st[E[j]])
+                if (st[i] != st[nei_list[j]])
                     n_opposite_neighbors[i]++;
         }
         if (st[i]==0)
-            rate[i] =  (double)n_opposite_neighbors[i]; // opinion A -> opinion B
+            rate[i] = (double)n_opposite_neighbors[i]; // opinion A -> opinion B
         else
             rate[i] = beta_B_to_A * n_opposite_neighbors[i]; // B -> A  
         total_rate += rate[i];
@@ -120,15 +89,13 @@ int main (int argc, char **argv) {
         // dynamics
         while (total_rate > 1e-6) { // There are still two opinions coexisting.
 
-        dt = -1.0 / total_rate * log ((genrand_int32()+0.5)/4294967296.0); // increment in t
-        if ((int)((t+dt)/10000) > (int)(t/10000)) { // avoid potential accumulation of roundoff error
+        tw = - log((genrand_int32()+0.5)/4294967296.0) / total_rate; // increment in t
+        if ((int)((t+tw)/10000) > (int)(t/10000)) { // avoid potential accumulation of roundoff error
             total_rate = 0.0;
             for (i=0 ; i<nV ; i++)
                 total_rate += rate[i];
         }
-        t += dt;
-    	// (double)rand()/RAND_MAX \in [0, 1], uniformly distributed
-
+        t += tw;
 
     	// determine the node to be updated
     	ra = (genrand_int32()+0.5)/4294967296.0 * total_rate; // ra \in [0, total_rate], uniformly distributed
@@ -158,23 +125,22 @@ int main (int argc, char **argv) {
         ind_min = (i==0)? 0 : accum_k[i-1];
         ind_max = accum_k[i] - 1;
             for (j = ind_min ; j <= ind_max ; j++) {
-                if (st[i] == st[E[j]]) // i's new state is the same as the j'th neighbor's state
-                    n_opposite_neighbors[E[j]]--;
+                if (st[i] == st[nei_list[j]]) // i's new state is the same as the j'th neighbor's state
+                    n_opposite_neighbors[nei_list[j]]--;
                 else    
-                    n_opposite_neighbors[E[j]]++;
-                if (st[E[j]]==0)
-                    rate_new = (double)n_opposite_neighbors[E[j]]; // A -> B
+                    n_opposite_neighbors[nei_list[j]]++;
+                if (st[nei_list[j]]==0)
+                    rate_new = (double)n_opposite_neighbors[nei_list[j]]; // A -> B
                 else
-                    rate_new = beta_B_to_A * n_opposite_neighbors[E[j]];
-                total_rate += rate_new - rate[E[j]];
-                rate[E[j]] = rate_new;
+                    rate_new = beta_B_to_A * n_opposite_neighbors[nei_list[j]];
+                total_rate += rate_new - rate[nei_list[j]];
+                rate[nei_list[j]] = rate_new;
             }
 
-        	cout << t << " " << (double)nA/nV << endl;
-    } // one state-transition event completed
-    
+        cout << t << " " << (double)nA/nV << endl; // one state-transition event completed
+    } // one trial completed
     } // all the trials completed
 
-  free(E); // free memory
-  return 0;
+    free_memory(nei_list, k, accum_k); // free memory
+    return 0;
 }

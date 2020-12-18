@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linspace
 
-type=3
+type=4
 
 if type==1:
 	result = np.loadtxt('result-voter-wellmixed') 
@@ -12,6 +12,8 @@ elif type==2:
 	result = np.loadtxt('result-voter-net') 
 elif type==3: # Lotka-Volterra
 	result = np.loadtxt('result-lv-wellmixed') 
+elif type==4: # SIR on a metapopularion network
+	result = np.loadtxt('result-sir-metapop')
 	
 # First column = time
 # Second coumn = fraction of nodes in opinion A
@@ -25,6 +27,13 @@ elif type==3: # Lotka-Volterra
 	plt.plot(result[:,0], result[:,1], 'b-', label='rabbit', linewidth=1)
 	plt.plot(result[:,0], result[:,2], 'r-', label='fox', linewidth=1)
 	plt.ylabel('Number of individuals', fontsize=20, family='Times New Roman')
+elif type==4: # SIR on a metapopulation network
+	plt.plot(result[:,0], result[:,1], 'b-', label='S', linewidth=1)
+	plt.plot(result[:,0], result[:,2], 'r-', label='I', linewidth=1)
+	plt.plot(result[:,0], result[:,3], '-', label='R', linewidth=1, color='brown')
+	plt.ylabel('Fraction of individuals', fontsize=20, family='Times New Roman')
+	plt.ylim(0, 1)
+	plt.yticks(np.arange(0, 1.2, step=0.2))
 #	plt.ylim(0, 1)
 #	plt.yticks(np.arange(0, 1.2, step=0.2))
 
@@ -39,6 +48,8 @@ elif type==2:
     plt.title('(b)', fontsize=28, x=-0.15, y=1.03, family='Times New Roman')
 elif type==3:
     plt.legend(loc = 'lower left', numpoints = 1, labelspacing=0.25)
+elif type==4:
+    plt.legend(loc = 'center right', numpoints = 1, labelspacing=0.25)
 
 # plt.show()
 plt.savefig("fig.pdf")

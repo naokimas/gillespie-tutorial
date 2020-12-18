@@ -13,10 +13,11 @@ using namespace std;
     http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
     http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c
 
-    If one prefers to use the in-built random number generator,
+    If one prefers to use the in-built pseudo-random number generator,
     (genrand_int32()+0.5)/4294967296.0 should be replaced by (double)rand()/RAND_MAX
     and
-    init_genrand(time(NULL)) should be replaced by, e.g., srand(time(NULL)) */
+    init_genrand(time(NULL)) should be replaced by, e.g., srand(time(NULL))
+    However, we recommend against the use of the in-built pseudo-random number generator. */
 
 int main (int argc, char **argv) {
 
@@ -34,7 +35,7 @@ int main (int argc, char **argv) {
     int trials = 1; // # trials
     int tr;
 
-    double t, dt; // time
+    double t; // time
     double t_max = 50;
     int nRabbit, nFox; // # rabbits and # foxes
     int nRabbit_init = 80; // initial condition
@@ -54,8 +55,7 @@ int main (int argc, char **argv) {
     while (nRabbit > 0 && nFox > 0 && t < t_max) { // There are still two opinions coexisting.
 
         total_rate = alpha * nRabbit + beta * nRabbit * nFox + mu * nFox;
-        dt = -1.0 / total_rate * log ((genrand_int32()+0.5)/4294967296.0); // increment in t
-        t += dt;
+        t += - log((genrand_int32()+0.5)/4294967296.0) / total_rate;
 
     	// determine whether A->B or B->A occurs
     	ra = (genrand_int32()+0.5)/4294967296.0 * total_rate; // ra \in [0, total_rate], uniformly distributed
@@ -71,10 +71,10 @@ int main (int argc, char **argv) {
             }
         }
 
-      	cout << t << " " << nRabbit << " " << nFox << endl;
-    } // one state-transition event completed
-    
-  } // all the trials completed
+        cout << t << " " << nRabbit << " " << nFox << endl;
+        // one state-transition event completed
+    } // one trial completed    
+    } // all the trials completed
 
-  return 0;
+    return 0;
 } // end of main
