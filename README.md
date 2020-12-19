@@ -5,7 +5,7 @@
 - tools-readfile.cc: Functions to read network files and manage memory.
 - rrg-N100k5.mat: A regular random graph with N=100 nodes and degree 5.
 
-- plot-trajectories-gillespie-tutorial.py: Plotting trajectories of the stochastic dynamics, producing the figures in the article
+- plot-trajectories-gillespie-tutorial.py: Plotting trajectories of the stochastic dynamics, producing the figures in the article.
 
 ### SIR model ###
 #### well-mixed populations ####
