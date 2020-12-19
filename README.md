@@ -7,16 +7,31 @@
 
 - plot-trajectories-gillespie-tutorial.py: Plotting trajectories of the stochastic dynamics, producing the figures in the article
 
-### SIR dynmics ###
+### SIR model ###
 #### well-mixed populations ####
 
-TO COME
+- sir-wellmixed.cc
+Usage:  
+```
+g++ voter-wellmixed.cc
+./a.out 100 > result-voter-wellmixed
+```
+The first argument (=100 in the example above) is the number of individuals.
 
 #### networks ####
 
-TO COME
+- sir-net.cc  
+Usage:
+```
+g++ sir-net.cc
+./a.out infilename > result-sir-net
+```
 
-### SIR dynamics on the metapopulation network model ###
+- sir-net-binary-tree.cc: same as sir-net.cc but using the binary search tree for faster speed.  
+Usage is the same as sir-net.cc
+
+
+### SIR model on the metapopulation network model ###
 - sir-metapop.cc  
 Usage:
 ```
@@ -32,7 +47,7 @@ Usage:
 g++ voter-wellmixed.cc
 ./a.out 100 > result-voter-wellmixed
 ```
-The first argument (=100 in the example above) is the number of nodes.
+The first argument (=100 in the example above) is the number of individuals.
 
 #### networks ####
 - voter-net.cc  
