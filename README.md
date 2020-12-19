@@ -2,7 +2,7 @@
 
 - mt19937ar.c: Mersenne Twister. Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
    All rights reserved. See the comments in the beginning of the code for the full copyright statement.                         
-- tools-readfile.cc: Functions to read network files
+- tools-readfile.cc: Functions to read network files and manage memory
 - rrg-N100k5.mat: A regular random graph with N=100 nodes and degree 5.
 
 - plot-trajectories-gillespie-tutorial.py: Plotting trajectories of the stochastic dynamics, producing the figures in the article
