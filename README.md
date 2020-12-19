@@ -11,7 +11,6 @@
 #### well-mixed populations ####
 
 - sir-wellmixed.cc
-Usage:  
 ```
 g++ voter-wellmixed.cc
 ./a.out 100 > result-voter-wellmixed
@@ -21,7 +20,6 @@ The first argument (=100 in the example above) is the number of individuals.
 #### networks ####
 
 - sir-net.cc  
-Usage:
 ```
 g++ sir-net.cc
 ./a.out infilename > result-sir-net
@@ -33,7 +31,6 @@ Usage is the same as sir-net.cc
 
 ### SIR model on the metapopulation network model ###
 - sir-metapop.cc  
-Usage:
 ```
 g++ sir-metapop.cc
 ./a.out rrg-N100k5.mat > result-sir-metapop
@@ -42,7 +39,6 @@ g++ sir-metapop.cc
 ### Voter model ###
 #### well-mixed populations ####
 - voter-wellmixed.cc  
-Usage:
 ```
 g++ voter-wellmixed.cc
 ./a.out 100 > result-voter-wellmixed
@@ -51,7 +47,6 @@ The first argument (=100 in the example above) is the number of individuals.
 
 #### networks ####
 - voter-net.cc  
-Usage:
 ```
 g++ voter-net.cc
 ./a.out infilename > result-voter-net
@@ -62,7 +57,6 @@ Usage is the same as voter-net.cc
 
 ### Lotka-Volterra model (well-mixed populations only) ###
 - lotka-volterra-wellmixed.cc  
-Usage:
 ```
 g++ lotka-volterra-wellmixed.cc
 ./a.out > result-lv-wellmixed
