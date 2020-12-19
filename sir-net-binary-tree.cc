@@ -1,4 +1,4 @@
-/* Numericala simulations of the voter model on networks using the direct method of Gillespie.
+/* Numerical simulations of the SIR on networks using the direct method of Gillespie.
 Undirected networks are assumed.
 A binary search tree is used. */
 
@@ -7,7 +7,7 @@ using namespace std;
 #include <fstream>
 #include <cstdlib> // atoi
 #include <cstring>
-#include <cmath> // log
+#include <cmath> // sqrt
 
 #include "mt19937ar.c"
 /* Mersenne Twister to generate random variates on [0,1].
@@ -26,15 +26,16 @@ using namespace std;
 int main (int argc, char **argv) {
 
     if (argc != 2) {
-        cerr << "Usage: voter-net-binary-tree.out infile" << endl;
+        cerr << "Usage: sir-net-binary-tree.out infile" << endl;
         exit(8);
     }
 
     init_genrand(time(NULL)); // seed the random number generator
 
-    int i, j, ii, jj, vs, ve, ind_min, ind_max;
+    int i, j, ii, jj, ind_min, ind_max;
     int nV; // # nodes
     int nE; // # bidirectional edges. If the network is undirected, nE = 2 * (number of edges)
+
     int *nei_list; // list of neighbors for each node
     int *k; // k[i] = degree of node [i]
     int *accum_k; // cumulative degree distribution
@@ -73,36 +74,39 @@ int main (int argc, char **argv) {
         where 2^{log2_Np_ceil} <= i < 2^{log2_Np_ceil}+2^{log2_Np_ceil-1}).
         Therefore, start[2] = 2^{log2_Np_ceil}+2^{log2_Np_ceil-1}.
         Similar for layers 3, 4, ... */
-        
-    double beta_B_to_A = 1.0; // strength of opinion A. The strength of opinion B is assumed to be 1. The unbiased voter model corresponds to r=1.
-    int st[nV]; // node's opinion. 0:A, 1:B
+
+    double beta = 0.6; // infection rate
+    double mu = 1.0; // recovery rate
+    int st[nV]; // state of each node. 0:S, 1:I, 2:R
+    int kI[nV]; // # infected neighbors. When the focal node is I or R, we set -1.
+    int pt0; // index patient
 
     double t; // time
-    int trials = 1; // # trials
+    int trials=1; // not multiplied by # nodes. 
     int tr;
     double ra; // random variate
-    double rate_new;
-    int n_opposite_neighbors[nV]; // n_opposite_neighbors[i] = # neighbors in the opposite opinion of node i
-    int nA; // # nodes in opinion A
+    int nI; // # infected nodes
+    int nR; // # recovered nodes
 
     for (tr=0 ; tr<trials ; tr++) {
 
     // initialization
-    for (i=0 ; i<nV/2 ; i++) st[i] = 0; // opinion A
-    for (i=nV/2 ; i<nV ; i++) st[i] = 1; // opinion B
-    nA=nV/2; // # opinion A
     for (i=0 ; i<nV ; i++) {
-        n_opposite_neighbors[i] = 0;
-        ind_min = (i==0)? 0 : accum_k[i-1];
-        ind_max = accum_k[i] - 1;
-        for (j = ind_min ; j <= ind_max ; j++) {
-                if (st[i] != st[nei_list[j]])
-                    n_opposite_neighbors[i]++;
-        }
-        if (st[i]==0)
-            lambda[i] = (double)n_opposite_neighbors[i]; // opinion A -> opinion B
-        else
-            lambda[i] = beta_B_to_A * n_opposite_neighbors[i]; // B -> A  
+        st[i] = 0; // S
+        kI[i] = 0; // # infected heighbors
+        lambda[i] = 0.0; // node's event rate
+    }
+    pt0 = 0; // index patient, i.e., ID of the single node that is initially infected
+    nI = 1; // # I
+    nR = 0; // # R 
+    st[pt0] = 1; // I; initially infected node
+    lambda[pt0] = mu; // recovery rate
+    
+    ind_min = (pt0==0)? 0 : accum_k[pt0-1];
+    ind_max = accum_k[pt0] - 1;
+    for (j = ind_min ; j <= ind_max ; j++) {
+        kI[nei_list[j]] = 1; // Node nei_list[j] initially has 1 infected neighbor, which is node pt0.
+        lambda[nei_list[j]] = beta;
     }
 
     // initialize the binary search tree    
@@ -112,18 +116,18 @@ int main (int argc, char **argv) {
         for (j = 0 ; j < pow2[log2_Np_ceil-i] ; j++)
             lambda[start[i+1]+j/2] += lambda[start[i]+j];
     }
-    
+
     if (tr >= 1)
-        cout << "nan nan" << endl; // separating the results for different runs. This is useful for plotting the results by Python matplotlib
+        cout << "nan nan nan nan" << endl; // separating the results for different runs. This is useful for plotting the results by Python matplotlib
 
-    t=0.0; // initialize time
     // dynamics
-    while (lambda[2*pow2[log2_Np_ceil]-2] > 1e-6) { // There are still two opinions coexisting.
+    t = 0.0; // initialize time
+    while (nI > 0) { // I exists 
 
-        t += - log((genrand_int32()+0.5)/4294967296.0) / lambda[2*pow2[log2_Np_ceil]-2];
+        t += - log((genrand_int32()+0.5)/4294967296.0) / lambda[2*pow2[log2_Np_ceil]-2]; 
 
     	// determine the node to be updated
-        ra = (genrand_int32()+0.5)/4294967296.0 * lambda[2*pow2[log2_Np_ceil]-2]; // ra is between 0 and lambda[2*pow2[log2_Np_ceil]-2]
+    	ra = (genrand_int32()+0.5)/4294967296.0 * lambda[2*pow2[log2_Np_ceil]-2]; // ra is between 0 and lambda[2*pow2[log2_Np_ceil]-2]
         i = 0;
         for (jj = log2_Np_ceil-1 ; jj >= 0 ; jj--) { // fast search using binary tree
             i *= 2;
@@ -133,47 +137,57 @@ int main (int argc, char **argv) {
             }
         } // node i will change the state
 
-        st[i] = 1-st[i]; // flip the opinion from 0 to 1 or from 1 to 0
-        if (st[i]==0)
-            nA++;
-        else
-            nA--;
-        
-        // update rate[i]
-        n_opposite_neighbors[i] = k[i] - n_opposite_neighbors[i];
-        if (st[i]==0)
-            rate_new = (double)n_opposite_neighbors[i]; // A -> B
-        else
-            rate_new = beta_B_to_A * n_opposite_neighbors[i]; // B -> A
-        Dlambda = rate_new - lambda[i]; // increment in lambda[i]
-        ii = i;
-        for (jj = 0 ; jj <= log2_Np_ceil ; jj++) { // update the binary tree including leaf node i
-            lambda[start[jj]+ii] += Dlambda;
-            ii /= 2;
-        }
-
-        // update neighbors' event rates
+        // The rates of neighbors of i may be affected
         ind_min = (i==0)? 0 : accum_k[i-1];
         ind_max = accum_k[i] - 1;
-            for (j = ind_min ; j <= ind_max ; j++) {
-                if (st[i] == st[nei_list[j]]) // i's new state is the same as the j'th neighbor's state
-                    n_opposite_neighbors[nei_list[j]]--;
-                else    
-                    n_opposite_neighbors[nei_list[j]]++;
-                if (st[nei_list[j]]==0)
-                    rate_new = (double)n_opposite_neighbors[nei_list[j]]; // A -> B
-                else
-                    rate_new = beta_B_to_A * n_opposite_neighbors[nei_list[j]];
-                Dlambda = rate_new - lambda[nei_list[j]]; // increment in lambda[nei_list[j]]
-                ii = nei_list[j];
-                for (jj = 0 ; jj <= log2_Np_ceil ; jj++) { // update the binary tree including leaf node nei_list[j]
-                    lambda[start[jj]+ii] += Dlambda; // update the binary tree
-                    ii /= 2;
+
+        if (st[i]==1) { // I -> R
+
+            for (j = ind_min ; j <= ind_max ; j++) { // node nei_list[j] loses one infected neighbor, which is node i
+                if (st[nei_list[j]]==0) {
+                    kI[nei_list[j]]--;
+                    ii = nei_list[j];
+                    for (jj = 0 ; jj <= log2_Np_ceil ; jj++) { // update the binary tree including leaf node i
+                        lambda[start[jj]+ii] -= beta;
+                        ii /= 2;
+                    }
                 }
             }
+            st[i] = 2; // I -> R
+            ii = i;
+            for (jj = 0 ; jj <= log2_Np_ceil ; jj++) { // update the binary tree including leaf node i
+                lambda[start[jj]+ii] -= mu;
+                ii /= 2;
+            }
+            nI--;
+            nR++;
+            
+        } else if (st[i]==0) { // S -> I
 
-        cout << t << " " << (double)nA/nV << endl; // one state-transition event completed
-    } // one trial completed
+            for (j = ind_min ; j <= ind_max ; j++) { // node nei_list[j] gains one infected neighbor, which is node i
+                if (st[nei_list[j]]==0) {
+                    kI[nei_list[j]]++;
+                    ii = nei_list[j];
+                    for (jj = 0 ; jj <= log2_Np_ceil ; jj++) { // update the binary tree including leaf node i
+                        lambda[start[jj]+ii] += beta;
+                        ii /= 2;
+                    }
+                }
+            }
+            st[i] = 1; // S -> I
+            Dlambda = mu - lambda[i]; // increment in lambda[i] = mu - beta * kI[i]
+            ii = i;
+            for (jj = 0 ; jj <= log2_Np_ceil ; jj++) { // update the binary tree including leaf node i
+                lambda[start[jj]+ii] += Dlambda;
+                ii /= 2;
+            }
+            nI++;
+        
+        }
+
+        cout << t << " " << (double)(nV-nI-nR)/nV << " " << (double)nI/nV << " " << (double)nR/nV << endl; // one state-transition event completed
+     } // one trial completed
+
     } // all the trials completed
 
     free_memory(nei_list, k, accum_k); // free memory

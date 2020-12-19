@@ -4,9 +4,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linspace
 
-type=4
+type=-1
 
-if type==1:
+if type==-1:
+	result = np.loadtxt('result-sir-wellmixed') 
+elif type==0:
+	result = np.loadtxt('result-sir-net') 
+elif type==1:
 	result = np.loadtxt('result-voter-wellmixed') 
 elif type==2:
 	result = np.loadtxt('result-voter-net') 
@@ -27,7 +31,7 @@ elif type==3: # Lotka-Volterra
 	plt.plot(result[:,0], result[:,1], 'b-', label='rabbit', linewidth=1)
 	plt.plot(result[:,0], result[:,2], 'r-', label='fox', linewidth=1)
 	plt.ylabel('Number of individuals', fontsize=20, family='Times New Roman')
-elif type==4: # SIR on a metapopulation network
+elif type==-1 or type==0 or type==4: # SIR
 	plt.plot(result[:,0], result[:,1], 'b-', label='S', linewidth=1)
 	plt.plot(result[:,0], result[:,2], 'r-', label='I', linewidth=1)
 	plt.plot(result[:,0], result[:,3], '-', label='R', linewidth=1, color='brown')
@@ -42,7 +46,9 @@ plt.xlabel(r'$t$', fontsize=24)
 plt.xlim(0, np.nanmax(result[:,0])*1.02) # result[-1,0] = time when the dynamics have terminated
 plt.tick_params(labelsize=20)
 
-if type==1:
+if type==-1 or type==0:
+    plt.legend(loc = 'center right', numpoints = 1, labelspacing=0.25)
+elif type==1:
     plt.title('(a)', fontsize=28, x=-0.15, y=1.03, family='Times New Roman')
 elif type==2:
     plt.title('(b)', fontsize=28, x=-0.15, y=1.03, family='Times New Roman')

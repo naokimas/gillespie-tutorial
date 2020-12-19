@@ -1,4 +1,4 @@
-/* Numerical simulations of the SIR model on networks on the metapopulation model using the directd method of Gillespie. */
+/* Numerical simulations of the SIR model on the metapopulation model network using the direct method of Gillespie. */
 
 // The recovery rate is set to 1.
 
@@ -21,9 +21,7 @@ using namespace std;
     init_genrand(time(NULL)) should be replaced by, e.g., srand(time(NULL))
     However, we recommend against the use of the in-built pseudo-random number generator. */
 
-int compare (const void *a, const void *b) {
-  return (*(int*)a-*(int*)b);
-}
+#include "tools-readfile.cc" // to read input file and manage memory
 
 int main (int argc, char **argv) {
 
@@ -34,67 +32,34 @@ int main (int argc, char **argv) {
 
     init_genrand(time(NULL)); // seed the random number generator
 
-    int i,j,vs,ve;
+    int i, j, vs, ve, upper, lower;
     int nV; // # nodes
     int nE; // # bidirectional edges. If the network is undirected, nE = 2 * (number of edges)
-    char dummy[8];
 
-    int trials = 1; // # trials
-    int tr;
-
-    double t;
-    double ra; // random variate
-    double total_rate; // total state-transition rate 
-
-    ifstream fin(argv[1]); // edge list
-    if (!fin) {
-        cerr << "sir-metapop.out: cannot open input edge file" << endl;
-        exit(8);
-    }
-
-    // *** I SHOULD ASSUME A MORE POPULAR DATA FORMAT AND ADJUST THE WRAPPER AROUND HERE.
-
-    fin >> dummy >> nV >> nE; // The first line of the file has '#', the number of nodes, and the number of edges, space separated
-    cerr << nV << " nodes, " << nE << " edges" << endl; // undirected net assumed
-    int k[nV]; // k[i] = degree of node i
-    for (i=0 ; i<nV ; i++)
-        k[i] = 0; // initialization
-    int *E; // list of edges
-    E = (int *)malloc(4*nE*sizeof(int)); // allocate memory
-    for (i=0 ; i<nE ; i++) { // read all edges
-        fin >> vs >> ve >> dummy; // Each line of the input file has the index of the two nodes connected by an edge in the 1st and 2nd columns, and edge weight, which we do not use in this code, in the 3rd column. 
-    // Note that in this code the node index starts from 0, not from 1.
-    // And in the input file the node index starts from 1.
-        vs--; ve--; // node index corrected here. Now the node index starts from 0.
-        E[4*i+3]=E[4*i]=vs; // i-th edge
-        E[4*i+2]=E[4*i+1]=ve;
-        k[vs]++; k[ve]++; // undirected network assumed
-    }
-    fin.close();
-
-    int accum_k[nV]; // accum_k[i] = sum of degrees of nodes from 0 to i
-    accum_k[0] = k[0];
-    for (i=1 ; i<nV ; i++) accum_k[i] = accum_k[i-1] + k[i];
-
-    qsort(E,2*nE,2*sizeof(int),compare);
-    for (i=0 ; i<2*nE ; i++) 
-        E[i] = E[2*i+1]; // reuse E[]
-        // Now E[x] where x = accum_k[i-1], ..., accum_k[i]-1 contains the neighbors of node i, with the convention accum_k[-1] = 0.
-        // Note that accum_k[nV-1] = nV-1
+    int *nei_list; // list of neighbors for each node
+    int *k; // k[i] = degree of node [i]
+    int *accum_k; // cumulative degree distribution
     
-    /* loading network data and preprocessing done */
+    readfile(argv[1], &nV, &nE, &nei_list, &k, &accum_k);
 
-    double beta = 0.04; // infection rate. The recovery rate is normalized to 1.
+    double beta = 0.04; // infection rate
+    double mu = 1.0; // recovery rate
     double D= 5.0; // diffusion rate
     double rho=50; // population density
 
-    int upper, lower, inc_SIpair;
-    int rai; // integer random variate 
+    double t;
+    int trials = 1; // # trials
+    int tr;
 
+    double ra; // random variate
+    int rai; // integer random variate 
+    double total_rate; // total state-transition rate 
     int nP, nPtmp; // # individuals
-    int nS[nV], nI[nV], accum_n_notR[nV], accum_nI[nV], accum_SIpair[nV];
+    int nS[nV]; // # susceptible individuals in a subpopulation
+    int nI[nV]; // # infected individuals in a subpopulation
     int nIsum; // # infected individuals
     int nRsum; // # recovered individuals
+    int accum_n_notR[nV], accum_nI[nV], accum_SIpair[nV], inc_SIpair;
 
     for (tr=0 ; tr<trials ; tr++) {
 
@@ -161,7 +126,7 @@ int main (int argc, char **argv) {
 
     while (nIsum>0) { // I exists 
 
-        total_rate = beta*accum_SIpair[nV-1] + nIsum + D*accum_n_notR[nV-1];
+        total_rate = beta * accum_SIpair[nV-1] + mu * nIsum + D * accum_n_notR[nV-1];
         // accum_nP[nV-1] = # individuals excluding R individuals. We do not need to simulate mobility of R individuals.
         t += - log((genrand_int32()+0.5)/4294967296.0) / total_rate; 
         ra = (genrand_int32()+0.5)/4294967296.0 * total_rate;
@@ -176,7 +141,7 @@ int main (int argc, char **argv) {
                 if (rai >= accum_n_notR[vs]) lower = vs+1;
                 else upper = vs;
             } // an individual in subpopulation vs moves to a neighboring subpopulation
-            ve = E[accum_k[vs]-genrand_int32()%k[vs]-1]; // accum_k[vs-1] <= ve < accum_k[vs] with the convention accum_k[-1]=0. An individual in subpopulation vs moves to subpopulation ve.
+            ve = nei_list[accum_k[vs] - genrand_int32()%k[vs] - 1]; // accum_k[vs-1] <= ve < accum_k[vs] with the convention accum_k[-1]=0. An individual in subpopulation vs moves to subpopulation ve.
 
             if (genrand_int32()%(nS[vs]+nI[vs]) < nI[vs]) { // one infected individual moves from subpopulation vs to subpopulation ve
 
@@ -220,7 +185,7 @@ int main (int argc, char **argv) {
         } else { // no individual moves. So, either one individual either gets infected or recovers.
             ra -= D*accum_n_notR[nV-1]; // now 0 < ra < beta*accum_SIpair[nV-1] + nIsum
 
-        	if (ra < nIsum) { // one individual recovers
+        	if (ra < mu * nIsum) { // one individual recovers
                 // determine which individual recovers using the bisection method
                 rai=(int)ra; // now 0 <= rai <= nIsum-1
                 lower=0;
@@ -243,7 +208,7 @@ int main (int argc, char **argv) {
 
             } else { // one susceptible individual gets infected
                 // determine which individual gets infected using the bisection method
-                rai = (int)((ra-nIsum)/beta); // now 0 <= rai <= accum_SIpair[nV-1]-1
+                rai = (int)((ra - mu*nIsum)/beta); // now 0 <= rai <= accum_SIpair[nV-1]-1
                 // determine a tentative starting I vertex
                 lower=0;
                 upper=nV-1;
@@ -266,11 +231,10 @@ int main (int argc, char **argv) {
 
     	} // either one recovery or infection event completed
     	
-//        cout << t << " " << (double)nRsum/accum_nP[nV-1] << endl; // a single-transition event completed
         cout << t << " " << (double)(nP-nIsum-nRsum)/nP << " " << (double)nIsum/nP << " " << (double)nRsum/nP << endl; // a single-transition event completed
     } // one trial completed
     } // all the trials completed
 
-    free(E); // free memory
+    free_memory(nei_list, k, accum_k); // free memory
     return 0;
 }

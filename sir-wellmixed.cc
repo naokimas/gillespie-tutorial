@@ -1,4 +1,4 @@
-/* Numericala simulations of the voter model in well-mixed populations using the direct method of Gillespie. */
+/* Numericala simulations of the SIR model in well-mixed populations using the direct method of Gillespie. */
 
 #include <iostream>
 using namespace std;
@@ -22,43 +22,50 @@ using namespace std;
 int main (int argc, char **argv) {
 
     if (argc < 2) {
-        cerr << "Usage: voter-wellmixed.out nV" << endl;
+        cerr << "Usage: SIR-wellmixed.out nV" << endl;
+        cerr << "nV = number of nodes" << endl; 
     exit(8);
     }
 
     init_genrand(time(NULL)); // seed the random number generator
 
     int nV = atoi(argv[1]); // # nodes
-    double beta_B_to_A = 1.0; // strength of opinion A. The strength of opinion B is assumed to be 1. The unbiased voter model corresponds to r=1.
+    double beta = (double)1.2/nV; // infection rate
+    double mu = 1.0; // recovery rate
+    cerr << "infection rate = " << beta << endl;
 
     double t; // time
-    int trials = 4; // # trials
+    int trials = 1; // # trials
     int tr;
-    int nA; // # nodes in opinion A
     double ra; // random variate
     double total_rate; // total state-transition rate 
+    int nI; // # infected nodes
+    int nR; // # recovered nodes
 
     for (tr=0 ; tr<trials ; tr++) {
 
     // initialization
-    nA=nV/2; // # opinion A
+    nI = 1; // # infected nodes
+    nR = 0; // # recovered nodes
+    
     t = 0.0;
     if (tr >= 1)
-        cout << "nan nan" << endl; // separating the results for different runs. This is useful for plotting the results by Python matplotlib
+        cout << "nan nan nan nan" << endl; // separating the results for different runs. This is useful for plotting the results by Python matplotlib
 
-    while (nA > 0 && nA < nV) { // There are still two opinions coexisting.
+    // dynamics
+    t = 0.0; // initialize time
+    while (nI > 0) { // I exists 
 
-        total_rate = (1 + beta_B_to_A) * nA * (nV-nA); // rate(B->A) = beta_B_to_A * (nV-nA) * nA; rate(A->B) = 1 * nA * (nV-nA)
+        total_rate = beta * (nV-nI-nR)*nI + mu * nI; // nV - nI - nR = number of susceptible nodes
         t += - log((genrand_int32()+0.5)/4294967296.0) / total_rate;
-
-    	// determine whether A->B or B->A occurs
-    	ra = (genrand_int32()+0.5)/4294967296.0 * total_rate; // ra is uniformly distributed on (0, total_rate)
-        if (ra < nA * (nV-nA)) // A -> B
-            nA--;
-        else // B -> A
-            nA++;
-
-        cout << t << " " << (double)nA/nV << endl; // one state-transition event completed
+    	ra = (genrand_int32()+0.5)/4294967296.0 * total_rate; // ra \in [0, total_rate], uniformly distributed
+        if (ra < mu * nI) { // I -> R
+            nI--;
+            nR++;
+        } else { // S -> I
+            nI++;
+        }
+        cout << t << " " << (double)(nV-nI-nR)/nV << " " << (double)nI/nV << " " << (double)nR/nV << endl; // one state-transition event completed
     } // one trial completed
     } // all the trials completed
 

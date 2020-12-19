@@ -26,12 +26,13 @@ int main (int argc, char **argv) {
 
     if (argc != 2) {
         cerr << "Usage: voter-net-net.out infile" << endl;
+        cerr << "nV = number of nodes" << endl; 
         exit(8);
     }
 
     init_genrand(time(NULL)); // seed the random number generator
 
-    int i, j, vs, ve;
+    int i, j, vs, ve, ind_min, ind_max;
     int nV; // # nodes
     int nE; // # bidirectional edges. If the network is undirected, nE = 2 * (number of edges)
     int *nei_list; // list of neighbors for each node
@@ -40,26 +41,19 @@ int main (int argc, char **argv) {
     
     readfile(argv[1], &nV, &nE, &nei_list, &k, &accum_k);
 
-    cerr << nV << " " << nE << endl;
-    for (i=0 ; i<nV ; i++)
-        cerr << i << " " << k[i] << " " << accum_k[i] << " : ";
-        
     double beta_B_to_A = 1.0; // strength of opinion A. The strength of opinion B is assumed to be 1. The unbiased voter model corresponds to r=1.
-    int trials = 4; // # trials
-    int tr;
+    int st[nV]; // node's opinion. 0:A, 1:B
 
     double t; // time
-    double tw; // waiting time to the next event
-    int st[nV]; // node's opinion
+    int trials = 4; // # trials
+    int tr;
     double ra; // random variate
     double total_rate; // total state-transition rate 
     double rate[nV]; // state-transition rate for a node
     double accum_rate;
     double rate_new;
-    
     int n_opposite_neighbors[nV]; // n_opposite_neighbors[i] = # neighbors in the opposite opinion of node i
     int nA; // # nodes in opinion A
-    int ind_min, ind_max;
 
     for (tr=0 ; tr<trials ; tr++) {
 
@@ -89,13 +83,7 @@ int main (int argc, char **argv) {
         // dynamics
         while (total_rate > 1e-6) { // There are still two opinions coexisting.
 
-        tw = - log((genrand_int32()+0.5)/4294967296.0) / total_rate; // increment in t
-        if ((int)((t+tw)/10000) > (int)(t/10000)) { // avoid potential accumulation of roundoff error
-            total_rate = 0.0;
-            for (i=0 ; i<nV ; i++)
-                total_rate += rate[i];
-        }
-        t += tw;
+        t += - log((genrand_int32()+0.5)/4294967296.0) / total_rate; // increment in t
 
     	// determine the node to be updated
     	ra = (genrand_int32()+0.5)/4294967296.0 * total_rate; // ra \in [0, total_rate], uniformly distributed
