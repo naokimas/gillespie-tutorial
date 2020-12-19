@@ -13,7 +13,7 @@
 - sir-wellmixed.cc
 ```
 g++ voter-wellmixed.cc
-./a.out 100 > result-voter-wellmixed
+./a.out 100 > result-sir-wellmixed
 ```
 The first argument (=100 in the example above) is the number of individuals.
 
