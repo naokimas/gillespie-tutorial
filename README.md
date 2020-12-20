@@ -23,9 +23,9 @@ The first argument (=100 in the example above) is the number of individuals.
 - sir-net.cc  
 ```
 g++ sir-net.cc
-./a.out infilename > result-sir-net
+./a.out rrg-N100k5.mat > result-sir-net
 ```
-
+- rrg-N100k5.mat is the list of edges of the input network.
 - sir-net-binary-tree.cc: same as sir-net.cc but using the binary search tree for faster speed.  
 Usage is the same as sir-net.cc
 
