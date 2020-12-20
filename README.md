@@ -34,8 +34,9 @@ Usage is the same as sir-net.cc
 - sir-metapop.cc  
 ```
 g++ sir-metapop.cc
-./a.out rrg-N100k5.mat > result-sir-metapop
+./a.out infilename > result-sir-metapop
 ```
+- infilename is the name of the input file, e.g., rrg-N100k5.mat 
 
 ### Voter model ###
 #### well-mixed populations ####
