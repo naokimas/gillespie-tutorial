@@ -52,7 +52,7 @@ The first argument (=100 in the example above) is the number of individuals.
 g++ voter-net.cc
 ./a.out infilename > result-voter-net
 ```
-
+- infilename is the name of the input file, e.g., rrg-N100k5.mat 
 - voter-net-binary-tree.cc: same as voter-net.cc but using the binary search tree for faster speed.  
 Usage is the same as voter-net.cc
 
