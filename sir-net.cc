@@ -1,5 +1,10 @@
 /* Numerical simulations of the SIR on networks using the direct method of Gillespie.
-Undirected networks are assumed. */
+Undirected networks are assumed.
+
+    Copyright (C) 2020, Naoki Masuda, All rights reserved.
+    Please cite the following paper when you use this code.
+    Naoki Masuda, Christian L. Vestergaard. Gillespie algorithms for stochastic multiagent dynamics in populations and networks. arXiv:xxx, Cambridge Elements, in review (2020).
+*/
 
 #include <iostream>
 using namespace std;
