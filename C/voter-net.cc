@@ -25,7 +25,7 @@ using namespace std;
 int main (int argc, char **argv) {
 
     if (argc != 2) {
-        cerr << "Usage: voter-net-net.out infile" << endl;
+        cerr << "Usage: voter-net.out infile" << endl;
         cerr << "nV = number of nodes" << endl; 
         exit(8);
     }
@@ -45,7 +45,7 @@ int main (int argc, char **argv) {
     int st[nV]; // node's opinion. 0:A, 1:B
 
     double t; // time
-    int trials = 4; // # trials
+    int trials = 3; // # trials
     int tr;
     double ra; // random variate
     double total_rate; // total state-transition rate 
